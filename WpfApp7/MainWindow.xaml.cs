@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Net.Http;
+using System.Windows;
 
 namespace WpfApp7
 {
@@ -14,9 +15,33 @@ namespace WpfApp7
             UrlTextBox.Text = defaultURL;
         }
 
-        private void GetAQIButton_Click(object sender, RoutedEventArgs e)
+        private async void GetAQIButton_Click(object sender, RoutedEventArgs e)
         {
             ContentTextBox.Text = "抓取資料中...";
+
+            string data = await FetchContentAsync(defaultURL);
+            ContentTextBox.Text = data;
+        }
+
+        private async Task<string> FetchContentAsync(string url)
+        {
+            using (var client = new HttpClient())
+            {
+                client.Timeout = TimeSpan.FromSeconds(100);
+                try
+                {
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    ContentTextBox.Text = responseBody;
+                    return responseBody;
+                }
+                catch (HttpRequestException e)
+                {
+                    MessageBox.Show($"Request exception: {e.Message}");
+                    return null;
+                }
+            }
         }
     }
 }
